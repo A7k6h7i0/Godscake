@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --z-red: #e23744;
+  --z-red-dark: #c62835;
+  --z-bg: #fff8f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(226, 55, 68, 0.07) 0, transparent 30%),
+    radial-gradient(circle at 90% 10%, rgba(255, 149, 0, 0.08) 0, transparent 30%),
+    var(--z-bg);
+}
+
+button,
+input,
+textarea,
+select {
+  outline-color: var(--z-red);
+}
