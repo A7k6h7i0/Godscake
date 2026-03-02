@@ -21,13 +21,22 @@ const bakerySchema = new mongoose.Schema(
     },
     rating: { type: Number, default: 4, min: 0, max: 5 },
     phone: { type: String, default: "" },
-    sourceRef: { type: String, default: "" },
+    imageUrl: { type: String, default: "" },
+    sourceRef: { type: String },
   },
   { timestamps: true }
 );
 
 bakerySchema.index({ location: "2dsphere" });
 bakerySchema.index({ name: "text", address: "text" });
-bakerySchema.index({ sourceRef: 1 }, { unique: true, sparse: true });
+bakerySchema.index(
+  { sourceRef: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      sourceRef: { $exists: true, $type: "string", $ne: "" },
+    },
+  }
+);
 
 export default mongoose.model("Bakery", bakerySchema);

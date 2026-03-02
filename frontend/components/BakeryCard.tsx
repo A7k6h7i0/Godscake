@@ -6,6 +6,7 @@ type Bakery = {
   address: string;
   rating?: number;
   distance?: number | null;
+  imageUrl?: string;
 };
 
 export default function BakeryCard({ bakery }: { bakery: Bakery }) {
@@ -16,7 +17,22 @@ export default function BakeryCard({ bakery }: { bakery: Bakery }) {
 
   return (
     <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="h-36 bg-gradient-to-br from-orange-500 via-rose-500 to-red-600" />
+      {bakery.imageUrl ? (
+        <img
+          src={bakery.imageUrl}
+          alt={bakery.name}
+          className="h-36 w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+            if (fallback) fallback.style.display = "block";
+          }}
+        />
+      ) : null}
+      <div
+        className="h-36 bg-gradient-to-br from-orange-500 via-rose-500 to-red-600"
+        style={{ display: bakery.imageUrl ? "none" : "block" }}
+      />
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-lg font-semibold text-gray-900">{bakery.name}</h3>

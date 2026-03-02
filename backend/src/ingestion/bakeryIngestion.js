@@ -25,12 +25,15 @@ const normalizeRecord = async (record) => {
 
   if (!name || !address || lat == null || lng == null) return null;
 
+  const sourceRefCandidate = value(record.id, record.source_id, record.place_id, record.uuid);
+  const sourceRef = sourceRefCandidate ? String(sourceRefCandidate).trim() : undefined;
+
   return {
     name: String(name).trim(),
     address: String(address).trim(),
     location: { type: "Point", coordinates: [lng, lat] },
     rating: Number(record.rating) || 4,
-    sourceRef: value(record.id, record.source_id, ""),
+    ...(sourceRef ? { sourceRef } : {}),
   };
 };
 

@@ -10,7 +10,20 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js"
 
 const app = express();
 
-app.use(cors({ origin: env.frontendUrl, credentials: true }));
+app.use(
+  cors({
+    origin: (requestOrigin, callback) => {
+      // Allow non-browser clients (no Origin header), then strictly validate browser origins.
+      if (!requestOrigin) return callback(null, true);
+      const normalizedOrigin = requestOrigin.replace(/\/+$/, "");
+      if (env.allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${requestOrigin}`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 

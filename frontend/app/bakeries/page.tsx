@@ -10,6 +10,7 @@ type Bakery = {
   address: string;
   rating?: number;
   distance?: number | null;
+  imageUrl?: string;
 };
 
 type Pagination = {
@@ -21,7 +22,7 @@ type Pagination = {
   hasPrevPage: boolean;
 };
 
-const SEARCH_STATE_KEY = "gods_cake_bakery_search_state_v1";
+const SEARCH_STATE_KEY = "gods_cake_bakery_search_state_v2";
 
 export default function BakeriesPage() {
   const [address, setAddress] = useState("");
@@ -103,6 +104,7 @@ export default function BakeriesPage() {
             latitude: lat,
             longitude: lng,
             radiusKm,
+            searchLocation: address,
             page: nextPage,
             limit,
             category: "bakery",
