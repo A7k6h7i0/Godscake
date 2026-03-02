@@ -153,8 +153,7 @@ export default function BakeriesPage() {
   return (
     <section className="space-y-6">
       <div className="rounded-3xl bg-gradient-to-r from-red-700 via-red-600 to-orange-500 p-6 text-white shadow-lg">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-100">Zomato-Inspired Discovery</p>
-        <h1 className="mt-2 text-3xl font-bold">Find cakes from nearby bakeries</h1>
+        <h1 className="text-3xl font-bold">Find cakes from nearby bakeries</h1>
         <p className="mt-1 text-sm text-red-50">Location-first discovery, distance-ranked results, and quick ordering.</p>
       </div>
 

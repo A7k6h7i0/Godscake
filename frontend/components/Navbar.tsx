@@ -16,8 +16,9 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-10 border-b border-red-100 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="text-xl font-bold tracking-tight text-red-600">
-          God&apos;s Cake
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-red-600">
+          <img src="/gods-cake-logo.svg" alt="God's Cake" className="h-9 w-9 rounded-full object-cover" />
+          <span>God&apos;s Cake</span>
         </Link>
         <div className="flex items-center gap-2 md:hidden">
           {isAuthenticated && (
