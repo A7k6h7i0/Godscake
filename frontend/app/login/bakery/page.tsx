@@ -185,7 +185,7 @@ export default function BakeryLoginPage() {
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-widest text-white/50">Order Flow</p>
-                <p className="mt-2 text-sm text-white/80">Placed -> Accepted -> Preparing -> Out for Delivery -> Delivered</p>
+                <p className="mt-2 text-sm text-white/80">Placed to Accepted to Preparing to Out for Delivery to Delivered</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-xs uppercase tracking-widest text-white/50">Menu Ops</p>
@@ -198,3 +198,4 @@ export default function BakeryLoginPage() {
     </main>
   );
 }
+
