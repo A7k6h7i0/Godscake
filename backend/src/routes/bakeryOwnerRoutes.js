@@ -89,7 +89,10 @@ router.patch(
 router.post(
   "/bakery/claim",
   requireBakeryOwnerAuth,
-  [body("bakeryId").isMongoId().withMessage("bakeryId is required")],
+  [
+    body("bakeryId").isMongoId().withMessage("bakeryId is required"),
+    body("force").optional().isBoolean().withMessage("force must be boolean"),
+  ],
   validate,
   claimOwnerBakery
 );

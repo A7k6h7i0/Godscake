@@ -35,7 +35,9 @@ export const updateOwnerBakery = async (req, res, next) => {
 
 export const claimOwnerBakery = async (req, res, next) => {
   try {
-    const bakery = await claimExistingBakery(req.bakeryOwner, req.body.bakeryId);
+    const bakery = await claimExistingBakery(req.bakeryOwner, req.body.bakeryId, {
+      force: Boolean(req.body.force),
+    });
     return sendSuccess(res, bakery, "Bakery claimed successfully");
   } catch (error) {
     return next(error);

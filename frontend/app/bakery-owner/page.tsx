@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import BakeryOwnerProtectedRoute from "@/components/BakeryOwnerProtectedRoute";
 import { bakeryOwnerApi } from "@/lib/bakeryOwnerApi";
+import { api } from "@/lib/api";
+import { setStoredBakeryOwner } from "@/lib/bakeryOwnerAuth";
 import { useBakeryOwnerAuth } from "@/context/BakeryOwnerAuthContext";
 import { useRouter } from "next/navigation";
 
@@ -25,6 +27,12 @@ type BakeryProfile = {
   location?: {
     coordinates?: [number, number];
   };
+};
+
+type BakeryResult = {
+  _id: string;
+  name: string;
+  address: string;
 };
 
 type MenuItem = {
@@ -72,6 +80,13 @@ function BakeryOwnerDashboard() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showClaimPanel, setShowClaimPanel] = useState(false);
+  const [claimQuery, setClaimQuery] = useState("");
+  const [claimResults, setClaimResults] = useState<BakeryResult[]>([]);
+  const [showClaimResults, setShowClaimResults] = useState(false);
+  const [selectedClaimBakery, setSelectedClaimBakery] = useState<BakeryResult | null>(null);
+  const [claimError, setClaimError] = useState("");
+  const [claimLoading, setClaimLoading] = useState(false);
 
   const [bakeryForm, setBakeryForm] = useState({
     name: "",
@@ -112,6 +127,7 @@ function BakeryOwnerDashboard() {
       const res = await bakeryOwnerApi.get("/bakery-owners/bakery");
       const next = res.data.data as BakeryProfile | null;
       setBakery(next);
+      setShowClaimPanel(!next);
       if (next) {
         setBakeryForm({
           name: next.name || "",
@@ -131,6 +147,7 @@ function BakeryOwnerDashboard() {
       if (handleAuthFailure(err)) return;
       if (err?.response?.status === 404) {
         setBakery(null);
+        setShowClaimPanel(true);
         return;
       }
       throw err;
@@ -182,6 +199,57 @@ function BakeryOwnerDashboard() {
   useEffect(() => {
     loadOrders().catch(() => undefined);
   }, [statusFilter, isAuthenticated]);
+
+  useEffect(() => {
+    if (!claimQuery.trim()) {
+      setClaimResults([]);
+      setShowClaimResults(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get("/bakeries", {
+          params: { search: claimQuery, page: 1, limit: 6 },
+        });
+        const results = (res.data.data || []) as BakeryResult[];
+        setClaimResults(results);
+        setShowClaimResults(true);
+      } catch {
+        setClaimResults([]);
+        setShowClaimResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [claimQuery]);
+
+  const handleClaimBakery = async (force: boolean) => {
+    if (!selectedClaimBakery) {
+      setClaimError("Select a bakery to claim.");
+      return;
+    }
+    setClaimError("");
+    setClaimLoading(true);
+    try {
+      await bakeryOwnerApi.post("/bakery-owners/bakery/claim", {
+        bakeryId: selectedClaimBakery._id,
+        force,
+      });
+      const profileRes = await bakeryOwnerApi.get("/bakery-owners/me");
+      if (profileRes.data?.data?.owner) {
+        setStoredBakeryOwner(profileRes.data.data.owner);
+      }
+      setClaimQuery(selectedClaimBakery.name);
+      setClaimResults([]);
+      setShowClaimResults(false);
+      await refreshAll();
+    } catch (err: any) {
+      setClaimError(err?.response?.data?.message || "Failed to claim bakery");
+    } finally {
+      setClaimLoading(false);
+    }
+  };
 
   const handleBakerySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,6 +366,107 @@ function BakeryOwnerDashboard() {
 
         {loading && <p className="mt-6 text-sm text-white/60">Loading bakery data...</p>}
         {error && <p className="mt-6 text-sm text-red-300">{error}</p>}
+
+        <section className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Linked Bakery</h2>
+              <p className="mt-1 text-sm text-white/60">
+                Orders appear only for the bakery linked to this owner account.
+              </p>
+            </div>
+            {bakery && (
+              <button
+                className="rounded-xl border border-white/20 px-4 py-2 text-sm"
+                onClick={() => {
+                  setShowClaimPanel((prev) => !prev);
+                  setClaimError("");
+                }}
+              >
+                {showClaimPanel ? "Cancel switch" : "Switch bakery"}
+              </button>
+            )}
+          </div>
+
+          {bakery ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <p className="text-sm text-white/70">Currently linked to</p>
+              <p className="mt-1 text-lg font-semibold">{bakery.name}</p>
+              <p className="text-xs text-white/50">{bakery.address}</p>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-amber-200">
+              No bakery linked yet. Search and claim the bakery where customers are ordering from (for example, Karachi Bakery).
+            </p>
+          )}
+
+          {showClaimPanel && (
+            <div className="mt-5 grid gap-3">
+              <div className="relative">
+                <label className="text-xs uppercase tracking-widest text-white/50">Search bakery</label>
+                <input
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400"
+                  placeholder="Start typing your bakery name"
+                  value={claimQuery}
+                  onChange={(e) => {
+                    setClaimQuery(e.target.value);
+                    setSelectedClaimBakery(null);
+                  }}
+                  onFocus={() => {
+                    if (claimResults.length) setShowClaimResults(true);
+                  }}
+                />
+                {showClaimResults && claimResults.length > 0 && (
+                  <div className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-xl border border-white/10 bg-[#121212] shadow-lg">
+                    {claimResults.map((result) => (
+                      <button
+                        key={result._id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedClaimBakery(result);
+                          setClaimQuery(result.name);
+                          setShowClaimResults(false);
+                        }}
+                        className="flex w-full flex-col gap-1 border-b border-white/5 px-4 py-3 text-left text-sm hover:bg-white/5"
+                      >
+                        <span className="font-semibold text-white">{result.name}</span>
+                        <span className="text-xs text-white/60">{result.address}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showClaimResults && claimResults.length === 0 && (
+                  <div className="absolute z-20 mt-2 w-full rounded-xl border border-white/10 bg-[#121212] px-4 py-3 text-sm text-white/60">
+                    No bakeries found.
+                  </div>
+                )}
+                {selectedClaimBakery && (
+                  <p className="mt-2 text-xs text-amber-200">Selected: {selectedClaimBakery.name}</p>
+                )}
+              </div>
+
+              {bakery && (
+                <p className="text-xs text-amber-200">
+                  Switching will unlink your current bakery and connect the selected one.
+                </p>
+              )}
+
+              {claimError && <p className="text-sm text-red-300">{claimError}</p>}
+
+              <button
+                className="w-full rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+                disabled={claimLoading}
+                onClick={() => handleClaimBakery(Boolean(bakery))}
+              >
+                {claimLoading
+                  ? "Linking bakery..."
+                  : bakery
+                    ? "Switch & claim bakery"
+                    : "Claim bakery"}
+              </button>
+            </div>
+          )}
+        </section>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg">

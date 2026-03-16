@@ -78,9 +78,17 @@ export const updateBakeryProfile = async (owner, payload) => {
   return bakery;
 };
 
-export const claimExistingBakery = async (owner, bakeryId) => {
+export const claimExistingBakery = async (owner, bakeryId, { force = false } = {}) => {
   if (owner.bakeryId && owner.bakeryId.toString() !== bakeryId) {
-    throw new ApiError(409, "This owner already has a bakery assigned");
+    if (!force) {
+      throw new ApiError(409, "This owner already has a bakery assigned");
+    }
+
+    const currentBakery = await Bakery.findById(owner.bakeryId);
+    if (currentBakery && currentBakery.ownerAccountId?.toString() === owner._id.toString()) {
+      currentBakery.ownerAccountId = null;
+      await currentBakery.save();
+    }
   }
 
   const bakery = await Bakery.findById(bakeryId);
