@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import BakeryCard from "@/components/BakeryCard";
+import Skeleton from "@/components/Skeleton";
 import { api } from "@/lib/api";
 
 type Bakery = {
@@ -47,6 +48,8 @@ export default function BakeriesPage() {
     const total = pagination?.totalItems ?? bakeries.length;
     return `${total} bakery${total === 1 ? "" : "ies"} available`;
   }, [hasSearched, loading, bakeries.length, pagination?.totalItems]);
+
+  const skeletonCount = Math.min(Math.max(limit, 6), 12);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -227,9 +230,19 @@ export default function BakeriesPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {bakeries.map((bakery) => (
-          <BakeryCard key={bakery._id} bakery={bakery} />
-        ))}
+        {loading && bakeries.length === 0
+          ? Array.from({ length: skeletonCount }).map((_, idx) => (
+              <div key={`skeleton-${idx}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                <Skeleton className="h-36 w-full" />
+                <div className="space-y-3 p-4">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-5/6" />
+                  <Skeleton className="h-8 w-28" />
+                </div>
+              </div>
+            ))
+          : bakeries.map((bakery) => <BakeryCard key={bakery._id} bakery={bakery} />)}
       </div>
     </section>
   );

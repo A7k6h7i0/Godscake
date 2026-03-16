@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { query, param } from "express-validator";
 import { geocodeAddressController, getBakery, getBakeries, getNearbyBakeries } from "../controllers/bakeryController.js";
+import { listBakeryMenuItems } from "../controllers/menuItemController.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 
 const router = Router();
@@ -43,5 +44,12 @@ router.get(
 );
 
 router.get("/:id", [param("id").isMongoId().withMessage("Invalid bakery id")], validate, getBakery);
+
+router.get(
+  "/:id/menu-items",
+  [param("id").isMongoId().withMessage("Invalid bakery id")],
+  validate,
+  listBakeryMenuItems
+);
 
 export default router;

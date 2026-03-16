@@ -5,7 +5,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  role: "user" | "admin" | "partner";
+  role: "user" | "admin" | "partner" | "bakery";
 };
 
 export const getToken = () => (typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null);

@@ -3,22 +3,34 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useBakeryOwnerAuth } from "@/context/BakeryOwnerAuthContext";
 import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated: isUserAuthenticated, logout: logoutUser } = useAuth();
+  const { owner, isAuthenticated: isOwnerAuthenticated, logout: logoutOwner } = useBakeryOwnerAuth();
   const { items } = useCart();
   const [accountOpen, setAccountOpen] = useState(false);
 
   const closeAccount = () => setAccountOpen(false);
-  const initial = (user?.name?.trim()?.charAt(0) || "U").toUpperCase();
+  const isAuthenticated = isUserAuthenticated || isOwnerAuthenticated;
+  const displayName = isUserAuthenticated ? user?.name : owner?.name;
+  const displayEmail = isUserAuthenticated ? user?.email : owner?.email;
+  const initial = (displayName?.trim()?.charAt(0) || "U").toUpperCase();
+  const showBakeryPanel = isOwnerAuthenticated;
+  const showOrders = user?.role === "user" && isUserAuthenticated;
+  const showCart = user?.role === "user" && isUserAuthenticated;
+  const logoutAll = () => {
+    if (isUserAuthenticated) logoutUser();
+    if (isOwnerAuthenticated) logoutOwner();
+  };
 
   return (
     <nav className="sticky top-0 z-10 border-b border-red-100 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-red-600">
           <img src="/gods-cake-logo.svg" alt="God's Cake" className="h-9 w-9 rounded-full object-cover" />
-          <span>God&apos;s Cake</span>
+          <span>God's Cake</span>
         </Link>
         <div className="flex items-center gap-2 md:hidden">
           {isAuthenticated && (
@@ -47,19 +59,30 @@ export default function Navbar() {
           <Link href="/bakeries" className="hover:text-red-600">
             Bakeries
           </Link>
-          {user?.role === "admin" ? (
+          {user?.role === "admin" && (
             <Link href="/admin" className="hover:text-red-600">
               Admin Panel
             </Link>
-          ) : user?.role === "partner" ? (
+          )}
+          {user?.role === "partner" && (
             <Link href="/partner" className="hover:text-red-600">
               Partner Panel
             </Link>
-          ) : (
+          )}
+          {showBakeryPanel && (
+            <Link href="/bakery-owner" className="hover:text-red-600">
+              Bakery Panel
+            </Link>
+          )}
+          {showOrders && (
             <>
               <Link href="/orders" className="hover:text-red-600">
                 Orders
               </Link>
+            </>
+          )}
+          {showCart && (
+            <>
               <Link href="/cart" className="hover:text-red-600">
                 Cart ({items.length})
               </Link>
@@ -91,8 +114,8 @@ export default function Navbar() {
 
       {accountOpen && isAuthenticated && (
         <div className="absolute right-4 top-16 z-20 w-64 rounded-lg border bg-white p-3 shadow-lg">
-          <p className="font-semibold text-gray-900">{user?.name}</p>
-          <p className="mb-3 text-xs text-gray-500">{user?.email}</p>
+          <p className="font-semibold text-gray-900">{displayName}</p>
+          <p className="mb-3 text-xs text-gray-500">{displayEmail}</p>
           <div className="flex flex-col gap-2 text-sm">
             <Link href="/bakeries" className="hover:text-red-600" onClick={closeAccount}>
               Bakeries
@@ -107,11 +130,20 @@ export default function Navbar() {
                 Partner Panel
               </Link>
             )}
-            {user?.role === "user" && (
+            {showBakeryPanel && (
+              <Link href="/bakery-owner" className="hover:text-red-600" onClick={closeAccount}>
+                Bakery Panel
+              </Link>
+            )}
+            {showOrders && (
               <>
                 <Link href="/orders" className="hover:text-red-600" onClick={closeAccount}>
                   Orders
                 </Link>
+              </>
+            )}
+            {showCart && (
+              <>
                 <Link href="/cart" className="hover:text-red-600" onClick={closeAccount}>
                   Cart ({items.length})
                 </Link>
@@ -120,7 +152,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => {
-                logout();
+                logoutAll();
                 closeAccount();
               }}
               className="mt-1 w-fit rounded-full bg-red-600 px-3 py-1.5 font-semibold text-white hover:bg-red-700"

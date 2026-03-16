@@ -32,3 +32,7 @@ export const env = {
   placesApiCategory: process.env.PLACES_API_CATEGORY || "bakery",
   overpassApiUrl: process.env.OVERPASS_API_URL || "https://overpass-api.de/api/interpreter",
 };
+
+if (env.nodeEnv === "production" && env.jwtSecret === "change-me") {
+  throw new Error("JWT_SECRET must be set in production");
+}

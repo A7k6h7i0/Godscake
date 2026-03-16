@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 import Cake from "../models/Cake.js";
+import MenuItem from "../models/MenuItem.js";
 import Order from "../models/Order.js";
 import Bakery from "../models/Bakery.js";
+import OrderItem from "../models/OrderItem.js";
 import { geocodeAddress } from "../utils/geocoding.js";
 import { ApiError } from "../middlewares/errorMiddleware.js";
 
@@ -50,18 +52,41 @@ export const createOrder = async ({
   if (!bakery) throw new ApiError(404, "Bakery not found");
   if (!items?.length) throw new ApiError(400, "Order items are required");
 
-  const cakeIds = items.map((item) => toObjectId(item.cakeId));
-  const cakes = await Cake.find({ _id: { $in: cakeIds }, bakeryId });
-  if (cakes.length !== items.length) {
-    throw new ApiError(400, "Some cakes are invalid for this bakery");
+  const cakeIds = items.filter((item) => item.cakeId).map((item) => toObjectId(item.cakeId));
+  const menuItemIds = items.filter((item) => item.menuItemId).map((item) => toObjectId(item.menuItemId));
+
+  const [cakes, menuItems] = await Promise.all([
+    cakeIds.length ? Cake.find({ _id: { $in: cakeIds }, bakeryId, isAvailable: true }) : [],
+    menuItemIds.length ? MenuItem.find({ _id: { $in: menuItemIds }, bakeryId, isAvailable: true }) : [],
+  ]);
+
+  if (cakes.length !== cakeIds.length || menuItems.length !== menuItemIds.length) {
+    throw new ApiError(400, "Some items are invalid for this bakery");
   }
 
   const cakeMap = new Map(cakes.map((cake) => [cake._id.toString(), cake]));
+  const menuMap = new Map(menuItems.map((item) => [item._id.toString(), item]));
   let totalPrice = 0;
   const normalizedItems = items.map((item) => {
-    const cake = cakeMap.get(item.cakeId);
     const quantity = Number(item.quantity) || 1;
-    if (!cake || quantity <= 0) throw new ApiError(400, "Invalid item in order");
+    if (quantity <= 0) throw new ApiError(400, "Invalid item in order");
+
+    if (item.menuItemId) {
+      const menuItem = menuMap.get(String(item.menuItemId));
+      if (!menuItem) throw new ApiError(400, "Invalid menu item in order");
+      const lineTotal = menuItem.price * quantity;
+      totalPrice += lineTotal;
+      return {
+        menuItemId: menuItem._id,
+        name: menuItem.name,
+        price: menuItem.price,
+        quantity,
+        lineTotal,
+      };
+    }
+
+    const cake = cakeMap.get(String(item.cakeId));
+    if (!cake) throw new ApiError(400, "Invalid cake in order");
     const lineTotal = cake.price * quantity;
     totalPrice += lineTotal;
     return {
@@ -96,6 +121,23 @@ export const createOrder = async ({
     statusHistory: [{ status: "Placed", at: new Date(), note: "Order placed by customer" }],
     totalPrice,
   });
+
+  if (normalizedItems.length) {
+    const createdItems = await OrderItem.insertMany(
+      normalizedItems.map((item) => ({
+        orderId: order._id,
+        bakeryId,
+        menuItemId: item.menuItemId || null,
+        cakeId: item.cakeId || null,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        lineTotal: item.lineTotal,
+      }))
+    );
+    order.orderItemIds = createdItems.map((item) => item._id);
+    await order.save();
+  }
 
   return order;
 };
@@ -134,6 +176,9 @@ export const getOrderByIdForRequester = async ({ orderId, requesterId, requester
 };
 
 export const listOrdersForRequester = async ({ requesterId, requesterRole, page = 1, limit = 20, status }) => {
+  if (!["user", "partner", "admin"].includes(requesterRole)) {
+    throw new ApiError(403, "You are not allowed to view orders");
+  }
   const currentPage = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
   const query = {};
@@ -148,7 +193,8 @@ export const listOrdersForRequester = async ({ requesterId, requesterRole, page 
       .limit(perPage)
       .populate("bakeryId", "name address location")
       .populate("userId", "name email")
-      .populate("deliveryPartnerId", "name email"),
+      .populate("deliveryPartnerId", "name email")
+      .lean(),
     Order.countDocuments(query),
   ]);
 
@@ -184,7 +230,7 @@ export const updateOrderStatusForAdmin = async ({ orderId, status, note = "" }) 
 export const listAvailableOrdersForPartner = async ({ page = 1, limit = 20 }) => {
   const currentPage = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
-  const query = { status: "Placed", deliveryPartnerId: null };
+  const query = { status: { $in: ["Placed", "Accepted", "Preparing"] }, deliveryPartnerId: null };
 
   const [orders, totalItems] = await Promise.all([
     Order.find(query)
@@ -192,7 +238,8 @@ export const listAvailableOrdersForPartner = async ({ page = 1, limit = 20 }) =>
       .skip((currentPage - 1) * perPage)
       .limit(perPage)
       .populate("bakeryId", "name address location")
-      .populate("userId", "name email"),
+      .populate("userId", "name email")
+      .lean(),
     Order.countDocuments(query),
   ]);
 
@@ -213,7 +260,7 @@ export const listAvailableOrdersForPartner = async ({ page = 1, limit = 20 }) =>
 export const acceptOrderForPartner = async ({ orderId, partnerId }) => {
   const order = await Order.findById(orderId).populate("bakeryId", "location name address");
   if (!order) throw new ApiError(404, "Order not found");
-  if (order.status !== "Placed" || order.deliveryPartnerId) {
+  if (!["Placed", "Accepted", "Preparing"].includes(order.status) || order.deliveryPartnerId) {
     throw new ApiError(409, "Order already accepted by another delivery partner");
   }
 
@@ -225,19 +272,20 @@ export const acceptOrderForPartner = async ({ orderId, partnerId }) => {
       : 0;
 
   const now = new Date();
+  const shouldAdvanceStatus = order.status === "Placed";
   const updated = await Order.findOneAndUpdate(
-    { _id: orderId, status: "Placed", deliveryPartnerId: null },
+    { _id: orderId, status: { $in: ["Placed", "Accepted", "Preparing"] }, deliveryPartnerId: null },
     {
       $set: {
         deliveryPartnerId: partnerId,
         deliveryAcceptedAt: now,
         deliveryDistanceKm: Number(distanceKm.toFixed(2)),
         deliveryPayout: calculatePartnerPayout(distanceKm),
-        status: "Accepted",
+        ...(shouldAdvanceStatus ? { status: "Accepted" } : {}),
       },
       $push: {
         statusHistory: {
-          status: "Accepted",
+          status: shouldAdvanceStatus ? "Accepted" : order.status,
           at: now,
           note: "Accepted by delivery partner",
         },
@@ -276,4 +324,71 @@ export const updateDeliveryStatusForPartner = async ({ orderId, partnerId, statu
   await order.save();
 
   return order;
+};
+
+// ===== Bakery Owner Functions =====
+
+export const listOrdersForBakeryOwner = async ({ bakeryId, page = 1, limit = 20, status }) => {
+  const currentPage = Math.max(Number(page) || 1, 1);
+  const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const query = { bakeryId };
+  if (status) query.status = status;
+
+  const [orders, totalItems] = await Promise.all([
+    Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage)
+      .populate("bakeryId", "name address location")
+      .populate("userId", "name email phone")
+      .populate("deliveryPartnerId", "name email")
+      .lean(),
+    Order.countDocuments(query),
+  ]);
+
+  const totalPages = Math.max(Math.ceil(totalItems / perPage), 1);
+  return {
+    data: orders,
+    pagination: {
+      totalItems,
+      totalPages,
+      currentPage,
+      limit: perPage,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    },
+  };
+};
+
+export const getBakeryByOwnerId = async (ownerId) => {
+  const bakery = await Bakery.findOne({ ownerId });
+  if (!bakery) throw new ApiError(404, "Bakery not found for this owner");
+  return bakery;
+};
+
+export const updateOrderStatusForBakeryOwner = async ({ orderId, bakeryOwnerId, status, note = "" }) => {
+  // First get the bakery owner to find their bakery
+  const bakery = await Bakery.findOne({ ownerId: bakeryOwnerId });
+  if (!bakery) throw new ApiError(403, "You don't own a bakery");
+
+  const order = await Order.findOne({ _id: orderId, bakeryId: bakery._id });
+  if (!order) throw new ApiError(404, "Order not found for your bakery");
+
+  assertValidStatusTransition(order.status, status);
+
+  if (order.status === status) return order;
+
+  // Bakery owners can only move to: Accepted or Preparing
+  if (!["Accepted", "Preparing"].includes(status)) {
+    throw new ApiError(403, "Bakery owners can only accept or mark orders as preparing");
+  }
+
+  order.status = status;
+  order.statusHistory.push({ status, at: new Date(), note: note || `Status updated by bakery: ${status}` });
+  await order.save();
+
+  return Order.findById(order._id)
+    .populate("bakeryId", "name address location")
+    .populate("userId", "name email phone")
+    .populate("deliveryPartnerId", "name email");
 };

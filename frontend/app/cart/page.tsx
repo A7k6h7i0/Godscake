@@ -22,12 +22,19 @@ function CartInnerPage() {
     setPlacing(true);
     setError("");
     try {
+      // Transform cart items to include both cakeId and menuItemId
+      const orderItems = items.map((item) => ({
+        cakeId: item.cakeId || undefined,
+        menuItemId: item.menuItemId || undefined,
+        quantity: item.quantity,
+      }));
+      
       const res = await api.post("/orders", {
         bakeryId,
         deliveryAddress,
         recipientName: sendToOther ? recipientName : "",
         recipientPhone: sendToOther ? recipientPhone : "",
-        items: items.map((item) => ({ cakeId: item.cakeId, quantity: item.quantity })),
+        items: orderItems,
       });
       const orderId = res.data.data._id as string;
       clearCart();
@@ -39,6 +46,9 @@ function CartInnerPage() {
     }
   };
 
+  // Helper to get unique identifier for cart item
+  const getItemId = (item: { cakeId?: string; menuItemId?: string }) => item.cakeId || item.menuItemId || "";
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
       <div className="rounded-lg bg-white p-4 shadow-sm">
@@ -47,26 +57,29 @@ function CartInnerPage() {
           <p className="mt-3 text-gray-600">Your cart is empty.</p>
         ) : (
           <div className="mt-4 space-y-3">
-            {items.map((item) => (
-              <div key={item.cakeId} className="flex items-center justify-between rounded border p-3">
-                <div>
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-gray-600">Rs. {item.price}</p>
+            {items.map((item) => {
+              const itemId = getItemId(item);
+              return (
+                <div key={itemId} className="flex items-center justify-between rounded border p-3">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-gray-600">Rs. {item.price}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-16 rounded border px-2 py-1"
+                      value={item.quantity}
+                      onChange={(e) => updateQuantity(itemId, Number(e.target.value))}
+                    />
+                    <button type="button" className="text-sm text-red-600" onClick={() => removeFromCart(itemId)}>
+                      Remove
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-16 rounded border px-2 py-1"
-                    value={item.quantity}
-                    onChange={(e) => updateQuantity(item.cakeId, Number(e.target.value))}
-                  />
-                  <button type="button" className="text-sm text-red-600" onClick={() => removeFromCart(item.cakeId)}>
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

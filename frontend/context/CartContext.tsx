@@ -5,7 +5,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const CART_KEY = "gods_cake_cart";
 
 export type CartItem = {
-  cakeId: string;
+  cakeId?: string;
+  menuItemId?: string;
   bakeryId: string;
   name: string;
   price: number;
@@ -17,8 +18,8 @@ type CartContextValue = {
   items: CartItem[];
   total: number;
   addToCart: (item: Omit<CartItem, "quantity">) => void;
-  removeFromCart: (cakeId: string) => void;
-  updateQuantity: (cakeId: string, quantity: number) => void;
+  removeFromCart: (itemId: string) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   bakeryId: string | null;
 };
@@ -50,26 +51,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   }, [items, hydrated]);
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
-    if (!item?.cakeId || !item?.bakeryId) return;
+    if (!item?.bakeryId || (!item?.cakeId && !item?.menuItemId)) return;
+    
+    // Use cakeId or menuItemId as the unique identifier
+    const itemId = item.cakeId || item.menuItemId;
+    if (!itemId) return;
+    
     setItems((prev) => {
       // Keep cart scoped to one bakery at a time for simpler checkout rules.
       const existingBakery = prev[0]?.bakeryId;
       const scoped = existingBakery && existingBakery !== item.bakeryId ? [] : prev;
-      const found = scoped.find((x) => x.cakeId === item.cakeId);
+      const found = scoped.find((x) => (x.cakeId || x.menuItemId) === itemId);
       if (found) {
-        return scoped.map((x) => (x.cakeId === item.cakeId ? { ...x, quantity: x.quantity + 1 } : x));
+        return scoped.map((x) => ((x.cakeId || x.menuItemId) === itemId ? { ...x, quantity: x.quantity + 1 } : x));
       }
       return [...scoped, { ...item, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (cakeId: string) => {
-    setItems((prev) => prev.filter((item) => item.cakeId !== cakeId));
+  const removeFromCart = (itemId: string) => {
+    setItems((prev) => prev.filter((item) => (item.cakeId || item.menuItemId) !== itemId));
   };
 
-  const updateQuantity = (cakeId: string, quantity: number) => {
-    if (quantity <= 0) return removeFromCart(cakeId);
-    setItems((prev) => prev.map((item) => (item.cakeId === cakeId ? { ...item, quantity } : item)));
+  const updateQuantity = (itemId: string, quantity: number) => {
+    if (quantity <= 0) return removeFromCart(itemId);
+    setItems((prev) => prev.map((item) => ((item.cakeId || item.menuItemId) === itemId ? { ...item, quantity } : item)));
   };
 
   const clearCart = () => setItems([]);

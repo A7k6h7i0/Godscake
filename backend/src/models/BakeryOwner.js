@@ -1,25 +1,27 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const bakeryOwnerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6, select: false },
-    role: { type: String, enum: ["user", "admin", "partner", "bakery"], default: "user" },
+    phone: { type: String, default: "" },
     bakeryId: { type: mongoose.Schema.Types.ObjectId, ref: "Bakery", default: null },
+    isActive: { type: Boolean, default: true },
+    lastLoginAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
-userSchema.pre("save", async function hashPassword(next) {
+bakeryOwnerSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   return next();
 });
 
-userSchema.methods.comparePassword = function comparePassword(rawPassword) {
+bakeryOwnerSchema.methods.comparePassword = function comparePassword(rawPassword) {
   return bcrypt.compare(rawPassword, this.password);
 };
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model("BakeryOwner", bakeryOwnerSchema);

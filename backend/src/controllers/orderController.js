@@ -1,11 +1,14 @@
 import {
   acceptOrderForPartner,
   createOrder,
+  getBakeryByOwnerId,
   getOrderByIdForRequester,
   listAvailableOrdersForPartner,
+  listOrdersForBakeryOwner,
   listOrdersForRequester,
   updateDeliveryStatusForPartner,
   updateOrderStatusForAdmin,
+  updateOrderStatusForBakeryOwner,
 } from "../services/orderService.js";
 import { sendSuccess } from "../utils/response.js";
 
@@ -100,6 +103,43 @@ export const updateDeliveryStatusForPartnerController = async (req, res, next) =
       note: req.body.note,
     });
     return sendSuccess(res, order, "Delivery status updated");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// ===== Bakery Owner Controllers =====
+
+export const listOrdersForBakeryOwnerController = async (req, res, next) => {
+  try {
+    // First get the bakery for this owner
+    const bakery = await getBakeryByOwnerId(req.user._id);
+    
+    const result = await listOrdersForBakeryOwner({
+      bakeryId: bakery._id,
+      page: req.query.page,
+      limit: req.query.limit,
+      status: req.query.status,
+    });
+    return res.status(200).json({
+      message: "Bakery orders fetched",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateOrderStatusForBakeryOwnerController = async (req, res, next) => {
+  try {
+    const order = await updateOrderStatusForBakeryOwner({
+      orderId: req.params.id,
+      bakeryOwnerId: req.user._id,
+      status: req.body.status,
+      note: req.body.note,
+    });
+    return sendSuccess(res, order, "Order status updated by bakery");
   } catch (error) {
     return next(error);
   }

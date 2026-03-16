@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import bakeryRoutes from "./routes/bakeryRoutes.js";
 import cakeRoutes from "./routes/cakeRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import bakeryOwnerRoutes from "./routes/bakeryOwnerRoutes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js";
 
 const app = express();
@@ -30,9 +31,15 @@ app.use(morgan("dev"));
 app.get("/health", (req, res) => res.json({ message: "God's Cake API healthy" }));
 
 app.use("/api", authRoutes);
+app.use("/api/bakery-owners", bakeryOwnerRoutes);
 app.use("/api/bakeries", bakeryRoutes);
 app.use("/api", cakeRoutes);
 app.use("/api/orders", orderRoutes);
+
+// Silence Chrome DevTools probe requests in development.
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (req, res) => {
+  res.status(204).end();
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);

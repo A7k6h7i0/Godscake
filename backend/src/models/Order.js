@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema(
   {
-    cakeId: { type: mongoose.Schema.Types.ObjectId, ref: "Cake", required: true },
+    cakeId: { type: mongoose.Schema.Types.ObjectId, ref: "Cake", default: null },
+    menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: "MenuItem", default: null },
     name: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 1 },
@@ -43,6 +44,7 @@ const orderSchema = new mongoose.Schema(
       },
     },
     items: { type: [orderItemSchema], required: true, validate: [(v) => v.length > 0, "Items required"] },
+    orderItemIds: { type: [mongoose.Schema.Types.ObjectId], ref: "OrderItem", default: [] },
     status: {
       type: String,
       enum: ["Placed", "Accepted", "Preparing", "Out for Delivery", "Delivered"],
