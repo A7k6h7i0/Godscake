@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { query, param } from "express-validator";
-import { geocodeAddressController, getBakery, getBakeries, getNearbyBakeries } from "../controllers/bakeryController.js";
+import { geocodeAddressController, getBakery, getBakeries, getNearbyBakeries, reverseGeocodeController } from "../controllers/bakeryController.js";
 import { listBakeryMenuItems } from "../controllers/menuItemController.js";
 import { validate } from "../middlewares/validateMiddleware.js";
 
@@ -24,6 +24,16 @@ router.get(
   [query("address").trim().notEmpty().withMessage("address query is required")],
   validate,
   geocodeAddressController
+);
+
+router.get(
+  "/reverse-geocode",
+  [
+    query("lat").notEmpty().isFloat({ min: -90, max: 90 }).withMessage("lat is required and must be valid"),
+    query("lng").notEmpty().isFloat({ min: -180, max: 180 }).withMessage("lng is required and must be valid"),
+  ],
+  validate,
+  reverseGeocodeController
 );
 
 router.get(

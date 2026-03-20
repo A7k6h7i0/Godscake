@@ -16,7 +16,7 @@ const orderStatusHistorySchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      enum: ["Placed", "Accepted", "Preparing", "Out for Delivery", "Delivered"],
+      enum: ["Placed", "Accepted", "Preparing", "Arrived", "Out for Delivery", "Delivered"],
       required: true,
     },
     at: { type: Date, required: true, default: Date.now },
@@ -47,7 +47,7 @@ const orderSchema = new mongoose.Schema(
     orderItemIds: { type: [mongoose.Schema.Types.ObjectId], ref: "OrderItem", default: [] },
     status: {
       type: String,
-      enum: ["Placed", "Accepted", "Preparing", "Out for Delivery", "Delivered"],
+      enum: ["Placed", "Accepted", "Preparing", "Arrived", "Out for Delivery", "Delivered"],
       default: "Placed",
       index: true,
     },

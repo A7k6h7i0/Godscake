@@ -7,14 +7,14 @@ import { api } from "@/lib/api";
 
 type PartnerOrder = {
   _id: string;
-  status: "Placed" | "Accepted" | "Preparing" | "Out for Delivery" | "Delivered";
+  status: "Placed" | "Accepted" | "Preparing" | "Arrived" | "Out for Delivery" | "Delivered";
   createdAt: string;
   deliveryAddress: string;
   totalPrice: number;
   deliveryDistanceKm?: number;
   deliveryPayout?: number;
   bakeryId?: { name?: string; address?: string };
-  userId?: { name?: string };
+  userId?: { name?: string; phone?: string };
 };
 
 function PartnerDashboardInner() {
@@ -112,18 +112,35 @@ function PartnerDashboardInner() {
           {myOrders.length === 0 && <p className="text-sm text-gray-500">No assigned orders yet.</p>}
           {myOrders.map((order) => (
             <article key={order._id} className="rounded-lg border p-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold">Order #{order._id.slice(-8)}</p>
-                  <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
-                  <p className="text-xs text-gray-500">Status: {order.status}</p>
-                  <p className="text-xs text-gray-500">Distance: {order.deliveryDistanceKm?.toFixed(2) || "0.00"} km</p>
-                  <p className="text-xs text-emerald-700">Payout: Rs. {order.deliveryPayout || 0}</p>
-                </div>
-                <Link href={`/orders/${order._id}`} className="rounded-full bg-slate-900 px-3 py-1.5 text-xs text-white">
-                  Manage
-                </Link>
-              </div>
+               <div className="flex items-start justify-between">
+                 <div>
+                   <p className="font-semibold">Order #{order._id.slice(-8)}</p>
+                   <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
+                   <p className="text-xs text-gray-500">Status: {order.status}</p>
+                   <p className="text-xs text-gray-500">Distance: {order.deliveryDistanceKm?.toFixed(2) || "0.00"} km</p>
+                   <p className="text-xs text-emerald-700">Payout: Rs. {order.deliveryPayout || 0}</p>
+                 </div>
+                 <div className="flex gap-2">
+                   {order.status === "Arrived" || order.status === "Out for Delivery" ? (
+                     <button
+                       onClick={() => {
+                         if (order.userId?.phone) {
+                           window.location.href = `tel:${order.userId.phone}`;
+                         }
+                       }}
+                       className={`rounded-full bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 ${
+                         !order.userId?.phone ? "opacity-50 cursor-not-allowed" : ""
+                       }`}
+                       disabled={!order.userId?.phone}
+                     >
+                       📞 Call Customer
+                     </button>
+                   ) : null}
+                   <Link href={`/orders/${order._id}`} className="rounded-full bg-slate-900 px-3 py-1.5 text-xs text-white">
+                     Manage
+                   </Link>
+                 </div>
+               </div>
             </article>
           ))}
         </div>

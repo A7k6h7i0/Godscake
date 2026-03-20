@@ -3,9 +3,15 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   --z-red: #e23744;
   --z-red-dark: #c62835;
   --z-bg: #fff8f6;
+  --cream: #fff6ef;
+  --ink: #2a1d16;
+  --muted: #6f5a4d;
+  --accent: #f05a3d;
+  --accent-soft: #ffb299;
 }
 
 * {
@@ -14,17 +20,36 @@
 
 body {
   margin: 0;
+  color: var(--ink);
   background:
-    radial-gradient(circle at 10% 20%, rgba(226, 55, 68, 0.07) 0, transparent 30%),
-    radial-gradient(circle at 90% 10%, rgba(255, 149, 0, 0.08) 0, transparent 30%),
-    var(--z-bg);
+    radial-gradient(circle at 10% 20%, rgba(240, 90, 61, 0.16) 0, transparent 45%),
+    radial-gradient(circle at 85% 10%, rgba(255, 178, 153, 0.3) 0, transparent 42%),
+    radial-gradient(circle at 85% 85%, rgba(45, 122, 93, 0.12) 0, transparent 45%),
+    var(--cream);
 }
 
 button,
 input,
 textarea,
 select {
-  outline-color: var(--z-red);
+  outline-color: var(--accent);
+}
+
+::selection {
+  background: rgba(240, 90, 61, 0.2);
+}
+
+.bg-grid {
+  background-image: linear-gradient(rgba(42, 29, 22, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 29, 22, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(246, 232, 222, 0.9);
+  box-shadow: 0 30px 70px -45px rgba(42, 29, 22, 0.6);
+  backdrop-filter: blur(16px);
 }
 
 @keyframes fade-up {

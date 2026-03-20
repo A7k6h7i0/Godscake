@@ -1,6 +1,6 @@
 import Bakery from "../models/Bakery.js";
 import { env } from "../config/env.js";
-import { geocodeAddress } from "../utils/geocoding.js";
+import { geocodeAddress, reverseGeocode } from "../utils/geocoding.js";
 import { ApiError } from "../middlewares/errorMiddleware.js";
 import axios from "axios";
 
@@ -121,6 +121,12 @@ export const geocodeAddressInput = async (address) => {
   const geo = await geocodeAddress(address);
   if (!geo) throw new ApiError(404, "Unable to geocode address");
   return geo;
+};
+
+export const reverseGeocodeInput = async (lat, lng) => {
+  const address = await reverseGeocode(lat, lng);
+  if (!address) throw new ApiError(404, "Unable to reverse geocode coordinates");
+  return { address };
 };
 
 export const listPlacesFromProvider = async ({ page = 1, limit = 20, search = "", min_rating, category }) => {

@@ -8,7 +8,7 @@ import { geocodeAddress } from "../utils/geocoding.js";
 import { ApiError } from "../middlewares/errorMiddleware.js";
 
 const toObjectId = (value) => new mongoose.Types.ObjectId(value);
-const ORDER_STATUSES = ["Placed", "Accepted", "Preparing", "Out for Delivery", "Delivered"];
+const ORDER_STATUSES = ["Placed", "Accepted", "Preparing", "Arrived", "Out for Delivery", "Delivered"];
 const DELIVERY_PARTNER_STATUSES = ["Out for Delivery", "Delivered"];
 
 const assertValidStatusTransition = (currentStatus, nextStatus) => {
@@ -145,7 +145,7 @@ export const createOrder = async ({
 export const getOrderByIdForUser = async ({ orderId, userId }) => {
   const order = await Order.findOne({ _id: orderId, userId })
     .populate("bakeryId", "name address location")
-    .populate("userId", "name email");
+    .populate("userId", "name email phone");
   if (!order) throw new ApiError(404, "Order not found");
   return order;
 };
@@ -169,7 +169,7 @@ export const getOrderByIdForRequester = async ({ orderId, requesterId, requester
 
   const order = await Order.findOne(filter)
     .populate("bakeryId", "name address location")
-    .populate("userId", "name email")
+    .populate("userId", "name email phone")
     .populate("deliveryPartnerId", "name email");
   if (!order) throw new ApiError(404, "Order not found");
   return order;
@@ -192,7 +192,7 @@ export const listOrdersForRequester = async ({ requesterId, requesterRole, page 
       .skip((currentPage - 1) * perPage)
       .limit(perPage)
       .populate("bakeryId", "name address location")
-      .populate("userId", "name email")
+      .populate("userId", "name email phone")
       .populate("deliveryPartnerId", "name email")
       .lean(),
     Order.countDocuments(query),
@@ -260,6 +260,13 @@ export const listAvailableOrdersForPartner = async ({ page = 1, limit = 20 }) =>
 export const acceptOrderForPartner = async ({ orderId, partnerId }) => {
   const order = await Order.findById(orderId).populate("bakeryId", "location name address");
   if (!order) throw new ApiError(404, "Order not found");
+  
+  // Check if delivery partner already has an active order
+  const existingActiveOrder = await Order.findOne({ deliveryPartnerId: partnerId, status: { $ne: "Delivered" } });
+  if (existingActiveOrder) {
+    throw new ApiError(409, "Delivery partner already has an active order");
+  }
+
   if (!["Placed", "Accepted", "Preparing"].includes(order.status) || order.deliveryPartnerId) {
     throw new ApiError(409, "Order already accepted by another delivery partner");
   }
@@ -310,9 +317,10 @@ export const updateDeliveryStatusForPartner = async ({ orderId, partnerId, statu
   const order = await Order.findOne({ _id: orderId, deliveryPartnerId: partnerId });
   if (!order) throw new ApiError(404, "Order not found for this delivery partner");
 
-  const canMoveToOutForDelivery = status === "Out for Delivery" && ["Accepted", "Preparing"].includes(order.status);
+  const canMoveToArrived = status === "Arrived" && ["Preparing"].includes(order.status);
+  const canMoveToOutForDelivery = status === "Out for Delivery" && ["Accepted", "Preparing", "Arrived"].includes(order.status);
   const canMoveToDelivered = status === "Delivered" && order.status === "Out for Delivery";
-  if (!canMoveToOutForDelivery && !canMoveToDelivered) {
+  if (!canMoveToArrived && !canMoveToOutForDelivery && !canMoveToDelivered) {
     throw new ApiError(400, `Cannot move order from ${order.status} to ${status}`);
   }
 

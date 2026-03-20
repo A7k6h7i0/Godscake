@@ -4,12 +4,23 @@ import {
   geocodeAddressInput,
   getBakeryById,
   listPlacesFromProvider,
+  reverseGeocodeInput,
 } from "../services/bakeryService.js";
 
 export const geocodeAddressController = async (req, res, next) => {
   try {
     const data = await geocodeAddressInput(req.query.address);
     return sendSuccess(res, data, "Address geocoded");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const reverseGeocodeController = async (req, res, next) => {
+  try {
+    const { lat, lng } = req.query;
+    const data = await reverseGeocodeInput(Number(lat), Number(lng));
+    return sendSuccess(res, data, "Coordinates reverse geocoded");
   } catch (error) {
     return next(error);
   }

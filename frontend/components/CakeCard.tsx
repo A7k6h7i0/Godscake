@@ -11,9 +11,12 @@ export default function CakeCard({ cake, onAdd }: { cake: Cake; onAdd: () => voi
   return (
     <article className="overflow-hidden rounded-lg border bg-white shadow-sm">
       <img
-        src={cake.imageUrl || "https://placehold.co/600x400"}
+        src={cake.imageUrl || "/placeholder-cake.jpg"}
         alt={cake.name}
         className="h-44 w-full object-cover"
+        onError={(e) => {
+          e.currentTarget.src = "/placeholder-cake.jpg";
+        }}
       />
       <div className="p-4">
         <h3 className="text-lg font-semibold">{cake.name}</h3>

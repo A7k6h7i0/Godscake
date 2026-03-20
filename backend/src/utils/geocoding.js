@@ -11,6 +11,7 @@ const toNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+// Forward geocoding (address -> coordinates)
 const geocodeWithMapbox = async (address) => {
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json`;
   const response = await axios.get(url, {
@@ -64,6 +65,56 @@ const geocodeWithPlacesApi = async (address) => {
   return normalizeCoords(lat, lng);
 };
 
+// Reverse geocoding (coordinates -> address)
+const reverseGeocodeWithMapbox = async (lat, lng) => {
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`;
+  const response = await axios.get(url, {
+    params: { access_token: env.mapboxToken, limit: 1 },
+    timeout: 10000,
+  });
+  const feature = response.data?.features?.[0];
+  if (!feature) return null;
+  return feature.place_name;
+};
+
+const reverseGeocodeWithNominatim = async (lat, lng) => {
+  const response = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+    params: { lat, lon: lng, format: "json", addressdetails: 1 },
+    headers: { "User-Agent": env.nominatimUserAgent },
+    timeout: 10000,
+  });
+  const data = response.data;
+  if (!data || !data.display_name) return null;
+  return data.display_name;
+};
+
+const reverseGeocodeWithPhoton = async (lat, lng) => {
+  const response = await axios.get("https://photon.komoot.io/reverse", {
+    params: { lat, lon: lng, limit: 1 },
+    headers: { "User-Agent": env.nominatimUserAgent },
+    timeout: 10000,
+  });
+  const feature = response.data?.features?.[0];
+  if (!feature) return null;
+  return feature.properties?.name || feature.properties?.address?.road || feature.properties?.address?.city || feature.properties?.address?.state || feature.properties?.address?.country;
+};
+
+const reverseGeocodeWithPlacesApi = async (lat, lng) => {
+  // Assuming our custom places API has a reverse endpoint
+  const response = await axios.get(`${env.placesApiBaseUrl}/api/places/reverse`, {
+    params: {
+      lat,
+      lng,
+    },
+    timeout: env.placesApiTimeoutMs,
+  });
+
+  const first = response.data?.data?.[0];
+  if (!first) return null;
+  // Adjust based on your API's response structure
+  return first.display_name || first.address || first.formatted_address;
+};
+
 export const geocodeAddress = async (address) => {
   if (!address?.trim()) return null;
 
@@ -78,6 +129,34 @@ export const geocodeAddress = async (address) => {
   attempts.push(() => geocodeWithNominatim(address));
   attempts.push(() => geocodeWithPhoton(address));
   attempts.push(() => geocodeWithPlacesApi(address));
+
+  for (const attempt of attempts) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await attempt();
+      if (result) return result;
+    } catch (error) {
+      // Continue fallback chain when provider is unreachable or rejects the request.
+    }
+  }
+
+  return null;
+};
+
+export const reverseGeocode = async (lat, lng) => {
+  if (lat == null || lng == null) return null;
+
+  const attempts = [];
+
+  if (env.geocodeProvider === "mapbox" && env.mapboxToken) {
+    attempts.push(() => reverseGeocodeWithMapbox(lat, lng));
+  }
+  if (env.geocodeProvider === "photon") {
+    attempts.push(() => reverseGeocodeWithPhoton(lat, lng));
+  }
+  attempts.push(() => reverseGeocodeWithNominatim(lat, lng));
+  attempts.push(() => reverseGeocodeWithPhoton(lat, lng));
+  attempts.push(() => reverseGeocodeWithPlacesApi(lat, lng));
 
   for (const attempt of attempts) {
     try {
