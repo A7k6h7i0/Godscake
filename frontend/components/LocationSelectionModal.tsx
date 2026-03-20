@@ -11,6 +11,12 @@ type LocationSelectionModalProps = {
   onLocationConfirmed: (lat: number, lng: number, address: string) => void;
 };
 
+type ConfirmedLocationDetails = {
+  lat: number;
+  lng: number;
+  address: string;
+};
+
 export const LocationSelectionModal = ({
   isOpen,
   onClose,
@@ -31,6 +37,17 @@ export const LocationSelectionModal = ({
   } | null>(null);
   const accuracyThresholdMeters = 100;
   const latestRequestId = useRef(0);
+  const confirmedDetails: ConfirmedLocationDetails | null =
+    confirmedLocation &&
+    confirmedLocation.lat !== null &&
+    confirmedLocation.lng !== null &&
+    confirmedLocation.address !== null
+      ? {
+          lat: confirmedLocation.lat,
+          lng: confirmedLocation.lng,
+          address: confirmedLocation.address,
+        }
+      : null;
 
   // If location is already set from context, use it as initial confirmed location
   useEffect(() => {
@@ -183,19 +200,19 @@ export const LocationSelectionModal = ({
   }, [manualAddress]);
 
   const handleConfirmLocation = useCallback(() => {
-    if (confirmedLocation?.lat !== null && confirmedLocation?.lng !== null && confirmedLocation?.address !== null) {
-      // Update the context location
-      setLocation({
-        lat: confirmedLocation.lat,
-        lng: confirmedLocation.lng,
-        address: confirmedLocation.address,
-        isFixed: true,
-      });
-      // Call the callback to proceed with order
-      onLocationConfirmed(confirmedLocation.lat, confirmedLocation.lng, confirmedLocation.address);
-      onClose();
-    }
-  }, [confirmedLocation, onClose, onLocationConfirmed, setLocation]);
+    if (!confirmedDetails) return;
+
+    // Update the context location
+    setLocation({
+      lat: confirmedDetails.lat,
+      lng: confirmedDetails.lng,
+      address: confirmedDetails.address,
+      isFixed: true,
+    });
+    // Call the callback to proceed with order
+    onLocationConfirmed(confirmedDetails.lat, confirmedDetails.lng, confirmedDetails.address);
+    onClose();
+  }, [confirmedDetails, onClose, onLocationConfirmed, setLocation]);
 
   if (!isOpen) return null;
 
@@ -399,7 +416,7 @@ export const LocationSelectionModal = ({
             )}
 
             {/* Location Confirmation */}
-            {confirmedLocation && (
+            {confirmedDetails && (
               <>
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-almond bg-white/80 p-4">
@@ -414,9 +431,9 @@ export const LocationSelectionModal = ({
                       </div>
                       <div className="flex-1">
                         <p className="text-xs uppercase tracking-[0.2em] text-muted">Detected location</p>
-                        <p className="mt-1 font-medium text-ink">{confirmedLocation.address}</p>
+                        <p className="mt-1 font-medium text-ink">{confirmedDetails.address}</p>
                         <p className="text-xs text-gray-400">
-                          Lat: {confirmedLocation.lat.toFixed(4)}, Lng: {confirmedLocation.lng.toFixed(4)}
+                          Lat: {confirmedDetails.lat.toFixed(4)}, Lng: {confirmedDetails.lng.toFixed(4)}
                         </p>
                       </div>
                       <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">Detected</span>
