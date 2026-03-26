@@ -19,7 +19,7 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register({ name, email, password });
       router.push("/bakeries");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Registration failed");
@@ -75,6 +75,13 @@ export default function RegisterPage() {
         <p className="mt-2 text-center text-sm text-gray-600">
           Are you a bakery owner?{" "}
           <Link href="/register/bakery" className="text-amber-600 hover:underline">
+            Register here
+          </Link>
+        </p>
+
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Are you a delivery partner?{" "}
+          <Link href="/register/partner" className="text-emerald-600 hover:underline">
             Register here
           </Link>
         </p>

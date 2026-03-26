@@ -16,6 +16,18 @@ export const registerUser = async ({ name, email, password }) => {
   return { token, user: { id: user._id, name: user.name, email: user.email, role: user.role } };
 };
 
+export const registerPartner = async ({ name, email, password, phone = "" }) => {
+  const existing = await User.findOne({ email: email.toLowerCase() });
+  if (existing) throw new ApiError(409, "Email already registered");
+
+  const user = await User.create({ name, email, password, phone, role: "partner" });
+  const token = buildToken(user);
+  return {
+    token,
+    user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+  };
+};
+
 export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
   if (!user) throw new ApiError(401, "Invalid credentials");

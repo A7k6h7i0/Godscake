@@ -188,6 +188,12 @@ export default function LoginPage() {
                   Register here
                 </Link>
               </p>
+              <p className="text-sm text-gray-600">
+                Are you a delivery partner?{" "}
+                <Link href="/login/partner" className="font-medium text-emerald-600 hover:text-emerald-700">
+                  Login or register here
+                </Link>
+              </p>
             </div>
           </div>
         </main>

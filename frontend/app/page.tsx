@@ -40,14 +40,14 @@ export default function HomePage() {
                   href="/register"
                   className="inline-flex items-center gap-2 rounded-full border border-almond bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-brand-300 hover:bg-brand-50"
                 >
-                  Create account
+                  Create user account
                 </Link>
               )}
               <Link
-                href="/partner"
+                href="/login/partner"
                 className="inline-flex items-center gap-2 rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-muted transition hover:text-ink"
               >
-                Partner with us
+                Delivery partner panel
               </Link>
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-muted">

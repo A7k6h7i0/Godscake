@@ -17,7 +17,7 @@ type AuthContextValue = {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (payload: { name: string; email: string; password: string; role?: "user" | "partner"; phone?: string }) => Promise<void>;
   logout: () => void;
 };
 
@@ -42,8 +42,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(nextUser);
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const response = await api.post("/register", { name, email, password });
+  const register = async ({
+    name,
+    email,
+    password,
+    role = "user",
+    phone,
+  }: {
+    name: string;
+    email: string;
+    password: string;
+    role?: "user" | "partner";
+    phone?: string;
+  }) => {
+    const endpoint = role === "partner" ? "/register/partner" : "/register";
+    const payload = role === "partner" ? { name, email, password, phone } : { name, email, password };
+    const response = await api.post(endpoint, payload);
     const nextToken = response.data.data.token as string;
     const nextUser = response.data.data.user as AuthUser;
     setToken(nextToken);

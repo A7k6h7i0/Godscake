@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import PartnerProtectedRoute from "@/components/PartnerProtectedRoute";
 import { api } from "@/lib/api";
 
 type PartnerOrder = {
@@ -151,8 +151,8 @@ function PartnerDashboardInner() {
 
 export default function PartnerPage() {
   return (
-    <ProtectedRoute allowRoles={["partner"]}>
+    <PartnerProtectedRoute>
       <PartnerDashboardInner />
-    </ProtectedRoute>
+    </PartnerProtectedRoute>
   );
 }
