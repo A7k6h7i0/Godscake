@@ -1,11 +1,6 @@
- "use client";
-
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 bg-hero-glow"></div>
@@ -35,14 +30,12 @@ export default function HomePage() {
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
               </Link>
-              {!isAuthenticated && (
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 rounded-full border border-almond bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-brand-300 hover:bg-brand-50"
-                >
-                  Create user account
-                </Link>
-              )}
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-full border border-almond bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Create user account
+              </Link>
               <Link
                 href="/login/partner"
                 className="inline-flex items-center gap-2 rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-muted transition hover:text-ink"

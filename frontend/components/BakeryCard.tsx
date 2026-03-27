@@ -39,6 +39,9 @@ export default function BakeryCard({ bakery }: { bakery: Bakery }) {
           src={bakery.imageUrl || bakeryFallbackImage}
           alt={bakery.name}
           className="h-48 w-full object-cover"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = bakeryFallbackImage;

@@ -38,7 +38,11 @@ function OrdersPageInner() {
 
   useEffect(() => {
     loadOrders();
-    const timer = setInterval(loadOrders, 10000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadOrders();
+      }
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 

@@ -60,7 +60,9 @@ function OrderInnerPage() {
     if (!id) return undefined;
     if (order?.status === "Delivered") return undefined;
     const interval = setInterval(() => {
-      loadOrder(false);
+      if (document.visibilityState === "visible") {
+        loadOrder(false);
+      }
     }, 10000);
     return () => clearInterval(interval);
   }, [id, order?.status]);

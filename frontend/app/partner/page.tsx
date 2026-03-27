@@ -42,7 +42,11 @@ function PartnerDashboardInner() {
 
   useEffect(() => {
     loadData();
-    const timer = setInterval(loadData, 10000);
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 

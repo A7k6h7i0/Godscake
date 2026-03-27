@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import BakeryCard from "@/components/BakeryCard";
 import Skeleton from "@/components/Skeleton";
@@ -421,11 +420,7 @@ export default function BakeriesPage() {
               </div>
             ))
           : bakeries.length > 0
-            ? bakeries.map((bakery) => (
-                <Link key={bakery._id} href={`/bakery/${bakery._id}`} className="group">
-                  <BakeryCard bakery={bakery} />
-                </Link>
-              ))
+            ? bakeries.map((bakery) => <BakeryCard key={bakery._id} bakery={bakery} />)
             : (
               <div className="col-span-full text-center py-12">
                 <svg className="h-12 w-12 mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

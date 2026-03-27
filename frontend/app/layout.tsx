@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import PageTransition from "@/components/PageTransition";
 import Providers from "./providers";
 
 const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-sans",
 });
@@ -28,12 +26,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} ${fraunces.variable} font-sans bg-cream text-ink`}>
+      <body className={`${manrope.variable} ${fraunces.variable} font-sans bg-cream text-ink overflow-x-hidden`}>
         <Providers>
           <Navbar />
-          <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <PageTransition>{children}</PageTransition>
-          </main>
+          <main className="w-full">{children}</main>
         </Providers>
       </body>
     </html>

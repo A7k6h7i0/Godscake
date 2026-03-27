@@ -14,6 +14,9 @@ export default function CakeCard({ cake, onAdd }: { cake: Cake; onAdd: () => voi
         src={cake.imageUrl || "/placeholder-cake.jpg"}
         alt={cake.name}
         className="h-44 w-full object-cover"
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
         onError={(e) => {
           e.currentTarget.src = "/placeholder-cake.jpg";
         }}

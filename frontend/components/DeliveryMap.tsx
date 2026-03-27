@@ -9,11 +9,13 @@ type DeliveryMapProps = {
 };
 
 export default function DeliveryMap({ bakeryLocation, deliveryLocation }: DeliveryMapProps) {
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  });
+  if (!L.Icon.Default.prototype.options.iconUrl) {
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+  }
 
   const center = deliveryLocation || bakeryLocation || { lat: 17.385, lng: 78.4867 };
 

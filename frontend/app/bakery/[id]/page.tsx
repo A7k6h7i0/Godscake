@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
@@ -81,12 +81,38 @@ export default function BakeryDetailsPage() {
     if (bakeryId) load();
   }, [bakeryId, toast]);
 
+  const displayItems = useMemo<DisplayItem[]>(
+    () => [
+      ...menuItems.map((item) => ({
+        id: item._id,
+        type: "menu" as const,
+        name: item.name,
+        description: item.description,
+        category: item.category,
+        price: item.price,
+        imageUrl: item.imageUrls?.[0],
+        isAvailable: item.isAvailable,
+      })),
+      ...cakes.map((cake) => ({
+        id: cake._id,
+        type: "cake" as const,
+        name: cake.name,
+        description: cake.description,
+        category: "Cake",
+        price: cake.price,
+        imageUrl: cake.imageUrl,
+        isAvailable: cake.isAvailable,
+      })),
+    ],
+    [cakes, menuItems]
+  );
+
   if (loading) {
     return (
       <section className="min-h-[calc(100vh-4rem)]">
         <div className="flex min-h-[calc(100vh-4rem)] flex-col">
           <header className="bg-white shadow-sm">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <div className="flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
               <Link href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900">
                 <span>God's Cake</span>
               </Link>
@@ -106,7 +132,7 @@ export default function BakeryDetailsPage() {
               </div>
             </div>
           </header>
-          <main className="flex-1 flex-col items-center justify-center py-12 px-4">
+          <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
             <div className="w-full max-w-4xl space-y-8">
               <div className="text-center">
                 <div className="h-9 w-9 flex items-center justify-center rounded-full bg-brand-50">
@@ -129,7 +155,7 @@ export default function BakeryDetailsPage() {
       <section className="min-h-[calc(100vh-4rem)]">
         <div className="flex min-h-[calc(100vh-4rem)] flex-col">
           <header className="bg-white shadow-sm">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <div className="flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
               <Link href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900">
                 <span>God's Cake</span>
               </Link>
@@ -149,8 +175,8 @@ export default function BakeryDetailsPage() {
               </div>
             </div>
           </header>
-          <main className="flex-1 py-12">
-            <div className="mx-auto max-w-xl">
+          <main className="flex-1 px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-xl">
               <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -187,7 +213,7 @@ export default function BakeryDetailsPage() {
       <div className="flex min-h-[calc(100vh-4rem)] flex-col">
         {/* Header */}
         <header className="bg-white/90 backdrop-blur-sm border-b border-gray-100">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex w-full items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-gray-900">
               <img src="/gods-cake-logo.svg" alt="God's Cake" className="h-8 w-8 rounded-full object-cover" />
               <span>God's Cake</span>
@@ -211,7 +237,7 @@ export default function BakeryDetailsPage() {
 
         {items.length > 0 && (
           <div className="sticky top-[72px] z-20 border-b border-almond bg-white/90 backdrop-blur">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+            <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -232,22 +258,22 @@ export default function BakeryDetailsPage() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 py-12">
-          <div className="mx-auto max-w-4xl w-full space-y-8">
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+          <div className="mx-auto w-full max-w-none space-y-8">
             {/* Bakery Header */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4">
+              <div className="space-y-5 p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-shrink-0">
-                    <div className="h-48 w-48 bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 flex items-center justify-center">
+                    <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 lg:h-72 lg:w-80">
                       <svg className="h-24 w-24 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 2l8.49 8.49a2 2 0 010 2.83l-6.34 6.35a2 2 0 01-2.83 0l-2.83-2.83-6.34 6.35a2 2 0 010-2.83l8.49-8.49z"></path>
                         <path d="M12 12a3 3 0 100 6 3 3 0 000-6z"></path>
                       </svg>
                     </div>
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <h1 className="text-3xl font-bold text-gray-900">{bakery?.name}</h1>
+                  <div className="flex-1 space-y-3">
+                    <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">{bakery?.name}</h1>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
@@ -281,12 +307,12 @@ export default function BakeryDetailsPage() {
 
             {/* Tabs for Menu Items and Cakes */}
             <div className="space-y-6">
-              <div className="flex items-center justify-between border-b pb-2">
+              <div className="flex flex-col gap-4 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Our Specialties</h2>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => {}}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    className={`rounded-lg px-4 py-2 font-medium transition-all duration-200 ${
                       true ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -294,69 +320,45 @@ export default function BakeryDetailsPage() {
                   </button>
                   <button
                     onClick={() => {}}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    className={`rounded-lg px-4 py-2 font-medium transition-all duration-200 ${
                       true ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-brand-500 text-white'
                     }`}
                   >
-                    Cakes
+                  Cakes
                   </button>
                 </div>
               </div>
 
               {/* Display Items Grid */}
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {(() => {
-                  const displayItems: DisplayItem[] = [
-                    ...menuItems.map((item) => ({
-                      id: item._id,
-                      type: "menu" as const,
-                      name: item.name,
-                      description: item.description,
-                      category: item.category,
-                      price: item.price,
-                      imageUrl: item.imageUrls?.[0],
-                      isAvailable: item.isAvailable,
-                    })),
-                    ...cakes.map((cake) => ({
-                      id: cake._id,
-                      type: "cake" as const,
-                      name: cake.name,
-                      description: cake.description,
-                      category: "Cake",
-                      price: cake.price,
-                      imageUrl: cake.imageUrl,
-                      isAvailable: cake.isAvailable,
-                    })),
-                  ];
-
-                  if (displayItems.length === 0) {
-                    return (
-                      <div className="col-span-full text-center py-12">
-                        <svg className="h-12 w-12 mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="8" x2="12" y2="12"></line>
-                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No items available</h3>
-                        <p className="text-sm text-gray-600">
-                          This bakery currently doesn't have any items available. Please check back later.
-                        </p>
-                      </div>
-                    );
-                  }
-
-                  return displayItems.map((item) => (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {displayItems.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <svg className="h-12 w-12 mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No items available</h3>
+                    <p className="text-sm text-gray-600">
+                      This bakery currently doesn't have any items available. Please check back later.
+                    </p>
+                  </div>
+                ) : (
+                  displayItems.map((item) => (
                     <Link key={`${item.type}-${item.id}`} href={`/bakery/${bakeryId}/item/${item.id}`} className="group">
-                      <article className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-0.5">
+                      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                         <img
                           src={item.imageUrl || "/placeholder-cake.jpg"}
                           alt={item.name}
-                          className="h-48 w-full object-cover"
+                          className="h-52 w-full object-cover sm:h-48"
+                          loading="lazy"
+                          decoding="async"
+                          fetchPriority="low"
                           onError={(e) => {
                             e.currentTarget.src = "/placeholder-cake.jpg";
                           }}
                         />
-                        <div className="p-6 space-y-4">
+                        <div className="flex flex-1 flex-col space-y-4 p-5 sm:p-6">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h3 className="text-xl font-bold text-gray-900">{item.name}</h3>
@@ -364,14 +366,12 @@ export default function BakeryDetailsPage() {
                                 <svg className="h-4 w-4 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                   <polygon points="12 2 15.09 8.26 22 9.27 13 14.29 15.45 20.05 12 16.77 8.55 20.05 11 14.29 2 9.27 8.91 8.26 12 2"></polygon>
                                 </svg>
-                                <span className="text-sm font-medium text-yellow-600">
-                                  {item.category || "Specialty"}
-                                </span>
+                                <span className="text-sm font-medium text-yellow-600">{item.category || "Specialty"}</span>
                               </div>
                             </div>
                             <span
                               className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                item.isAvailable ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                                item.isAvailable ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
                               }`}
                             >
                               {item.isAvailable ? "Available" : "Unavailable"}
@@ -380,7 +380,7 @@ export default function BakeryDetailsPage() {
                           <p className="text-sm text-gray-600 line-clamp-3">
                             {item.description || "Freshly made with love and the finest ingredients"}
                           </p>
-                          <div className="mt-4 flex items-center justify-between">
+                          <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <span className="text-2xl font-bold text-red-600">Rs. {item.price}</span>
                             <button
                               type="button"
@@ -401,10 +401,10 @@ export default function BakeryDetailsPage() {
                                 });
                               }}
                               disabled={!item.isAvailable}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                              className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-all duration-200 ${
                                 !item.isAvailable
-                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                  : 'bg-brand-500 text-white hover:bg-brand-600 shadow-lg shadow-brand-500/20'
+                                  ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                                  : "bg-brand-500 text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600"
                               }`}
                             >
                               {item.isAvailable ? "Add to cart" : "Out of stock"}
@@ -417,8 +417,8 @@ export default function BakeryDetailsPage() {
                         </div>
                       </article>
                     </Link>
-                  ));
-                })()}
+                  ))
+                )}
               </div>
             </div>
           </div>

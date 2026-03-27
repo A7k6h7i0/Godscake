@@ -26,8 +26,8 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     address: null,
     isFixed: false,
   });
+  const [hydrated, setHydrated] = useState(false);
 
-  // Load from localStorage on initial load
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("gods_cake_location");
@@ -39,15 +39,16 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
           // ignore invalid JSON
         }
       }
+      setHydrated(true);
     }
   }, []);
 
   // Save to localStorage whenever location changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (hydrated && typeof window !== "undefined") {
       localStorage.setItem("gods_cake_location", JSON.stringify(location));
     }
-  }, [location]);
+  }, [location, hydrated]);
 
   const isLocationConfirmed = location.isFixed && location.lat !== null && location.lng !== null && location.address !== null;
 
